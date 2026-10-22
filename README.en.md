@@ -28,7 +28,10 @@ python convert_gt1.py --model "content/cars/my_car" --specs my_car.json --disc "
 - `--specs`: the specification file (JSON), see [`examples/mazda_mx5_rf_nd2.json`](examples/mazda_mx5_rf_nd2.json):
   the car replaced (`target`), name (two lines), dimensions (mm), weight, engine (displacement,
   power, torque curve in N·m), gear ratios, tyres, price, paints (name + colour), and for an
-  Assetto Corsa mod the paint of the `skins/` folder to use (`skin`).
+  Assetto Corsa mod the paint of the `skins/` folder to use (`skin`); engine (`cylinders`,
+  `valvetrain`, `aspiration`) and `suspension` for the SPEC page; `short_name` for the race
+  screens; `emblem` (a PNG of the logo), `info` (the INFO page's text, one per language or a
+  single one) for the menus.
 - `--disc`: your Gran Turismo PAL image (`.chd`, `.cue` or `.bin`).
 
 Cars that can be replaced for now (CAR.DAT entries checked): `aminn` (Eunos Roadster), `altsn`
@@ -57,14 +60,20 @@ Cars that can be replaced for now (CAR.DAT entries checked): `aminn` (Eunos Road
 - **The game's model**: a low-poly shell of rings (3 levels of detail), texture from orthographic
   views (side, top, front, rear), 16 palettes of 16 colours, one set per paint.
 - **Specifications** (CARINF.DAT): name, dimensions, weight, gear ratios (7 at most), torque curve,
-  revs, tyres, displayed power, price, paint names.
+  revs, tyres, displayed power, price, paint names, and for the SPEC page the engine type
+  (cylinders, valvetrain, turbo) and the front / rear suspensions.
+- **Menus** (MENU_IMG.ARC, the 6 languages): the name picture (the make's emblem, name, version,
+  in the game's style), the dealer tile (a picture of the converted model, emblem, name, version,
+  price with each language's separator) and the INFO page (title and history); the short name
+  of the race screens (SYSTEM.DAT).
+- **Several cars on one disc**: `generate(..., files=...)` adds a car to the files another one
+  already changed.
 
 Tried in PCSX-Redux on three models: a glTF from Sketchfab (an SUV), an Assetto Corsa mod (a
 saloon, with `data.acd` and paints) and a lone `.kn5` (the MX-5 RF).
 
 ## To do
 
-- the car's name pictures and the dealer tile (still those of the car replaced);
 - a local page: drop the model, the specification file filled in, the disc, choose the car to
   replace, **rotating 3D preview** of the model and then of the result;
 - Gran Turismo 2.

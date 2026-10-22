@@ -28,7 +28,10 @@ python convert_gt1.py --model "content/cars/ma_voiture" --specs ma_voiture.json 
 - `--specs` : la fiche (JSON), voir [`examples/mazda_mx5_rf_nd2.json`](examples/mazda_mx5_rf_nd2.json) :
   voiture remplacée (`target`), nom (deux lignes), dimensions (mm), poids, moteur (cylindrée,
   puissance, courbe de couple en N·m), rapports, pneus, prix, peintures (nom + couleur), et pour
-  un mod Assetto Corsa la peinture du dossier `skins/` à prendre (`skin`).
+  un mod Assetto Corsa la peinture du dossier `skins/` à prendre (`skin`) ; moteur
+  (`cylinders`, `valvetrain`, `aspiration`) et `suspension` pour la page SPEC ; `short_name`
+  pour les écrans de course ; `emblem` (image PNG du logo), `info` (texte de la page INFO, un
+  par langue ou un seul) pour les menus.
 - `--disc` : son image de Gran Turismo PAL (`.chd`, `.cue` ou `.bin`).
 
 Voitures remplaçables pour l'instant (entrées de CAR.DAT vérifiées) : `aminn` (Eunos Roadster),
@@ -59,15 +62,20 @@ voitures du disque (`converter/gt1/cars.py`) est en cours.
   orthographiques (côté, dessus, avant, arrière), 16 palettes de 16 couleurs, une série par
   peinture.
 - **Caractéristiques** (CARINF.DAT) : nom, dimensions, poids, rapports (7 au plus), courbe de
-  couple, régimes, pneus, puissance affichée, prix, noms des peintures.
+  couple, régimes, pneus, puissance affichée, prix, noms des peintures, et pour la page SPEC le
+  type de moteur (cylindres, distribution, turbo) et les suspensions avant / arrière.
+- **Menus** (MENU_IMG.ARC, les 6 langues) : l'image du nom (logo de la marque, nom, version, dans
+  le style du jeu), la vignette du concessionnaire (photo du modèle converti, logo, nom, version,
+  prix avec le séparateur de chaque langue) et la page INFO (titre et historique) ; le nom court
+  des écrans de course (SYSTEM.DAT).
+- **Plusieurs voitures sur un même disque** : `generate(..., files=...)` ajoute une voiture aux
+  fichiers déjà modifiés par une autre.
 
 Essayé dans PCSX-Redux sur trois modèles : un glTF de Sketchfab (SUV), un mod Assetto Corsa
 (berline, avec `data.acd` et peintures) et un `.kn5` seul (la MX-5 RF).
 
 ## À faire
 
-- les images du nom de la voiture et la vignette du concessionnaire (encore celles de la voiture
-  remplacée) ;
 - une page locale : déposer le modèle, la fiche préremplie, le disque, choisir la voiture à
   remplacer, **aperçu 3D qui tourne** du modèle puis du résultat ;
 - Gran Turismo 2.

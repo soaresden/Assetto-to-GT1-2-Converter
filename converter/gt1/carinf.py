@@ -10,6 +10,11 @@ SPEC record (0x1A8 bytes; layout from pez2k's GT1DataSplitter, values checked on
   0x13E 16 x u16 torque (kgf.m x 100)                0x184 u32 price (yen; PAL shows / 100)
   0x188 name (u16 string, u16 table), 0x18C second line of the name (u16 string, u16 table)
   0x194 u16 length (mm), displacement (cc), power (PS), power rpm, torque (kgf.m x 100), torque rpm
+  0x1A3 u8 aspiration (0 normal, 1 turbo, 2 supercharger), valvetrain (0 SOHC, 1 DOHC, 2 OHV,
+  3 rotary), cylinders (0 L4, 1 L6, 2 V6, 3 V8, 4 V10, 5 rotary, 6 boxer 4, 7 boxer 6), front and
+  rear suspension (0 strut, 1 trailing twist beam, 2 double wishbone, 3 multilink, 4 parallel-link
+  strut, 5 multilink beam, 6 MacPherson strut, 7 semi-trailing arm, 8 torque arm): found by
+  comparing the cars of the disc, the names are lists of MESSAGES.DAT
 COLOR record (0x54 bytes): u16 car (SPEC index + 1), 16 x u8 paint letters (those of the car's
 texture), u16, 16 x (u16 string, u16 table) paint names.
 """
@@ -65,6 +70,8 @@ def patch(carinf, codes, paints, price=None, log=print, spec_values=None, name=N
         struct.pack_into('<16H', r, 0x13E, *s['torque'])
         struct.pack_into('<4H', r, 0x188, n1, 0, n2, 1)
         struct.pack_into('<6H', r, 0x194, *s['display'])
+        if s.get('type'):
+            r[0x1A3:0x1A8] = bytes(s['type'])
         if price is not None:
             struct.pack_into('<I', r, 0x184, int(price) * 100)
         for c in color.records:
@@ -77,4 +84,29 @@ def patch(carinf, codes, paints, price=None, log=print, spec_values=None, name=N
     new = {SPEC_ENTRY: spec.write(), COLOR_ENTRY: color.write()}
     # the whole file is one compressed archive
     files = [new.get(k, arc[k]) for k in range(len(arc))]
+    return gtarc.compress(gtarc.build(files, [False] * len(files), align=4))
+
+
+ASPIRATION = {'normal': 0, 'na': 0, 'turbo': 1, 'supercharger': 2, 'compresseur': 2}
+VALVETRAIN = {'sohc': 0, 'dohc': 1, 'ohv': 2, 'rotary': 3}
+CYLINDERS = {'l4': 0, 'l6': 1, 'v6': 2, 'v8': 3, 'v10': 4, 'rotary': 5, 'boxer4': 6, 'b4': 6, 'boxer6': 7, 'b6': 7}
+SUSPENSION = {'strut': 0, 'twist beam': 1, 'trailing twist beam': 1, 'double wishbone': 2, 'multilink': 3,
+              'parallel-link strut': 4, 'multilink beam': 5, 'macpherson': 6, 'mcpherson': 6,
+              'semi-trailing arm': 7, 'torque arm': 8}
+
+
+def type_bytes(aspiration, valvetrain, cylinders, front, rear):
+    """The five bytes at 0x1A3 from names (see the table above)."""
+    return (ASPIRATION[aspiration.lower()], VALVETRAIN[valvetrain.lower()], CYLINDERS[cylinders.lower()],
+            SUSPENSION[front.lower()], SUSPENSION[rear.lower()])
+
+
+def set_types(carinf, codes, types):
+    """CARINF.DAT with the engine and suspension types of `codes` changed (five bytes, type_bytes)."""
+    arc = gtarc.Arc(carinf)
+    spec = gt1data.Table(arc[SPEC_ENTRY])
+    for r in spec.records:
+        if bytes(r[:6]).rstrip(b'\0').decode() in codes:
+            r[0x1A3:0x1A8] = bytes(types)
+    files = [spec.write() if k == SPEC_ENTRY else arc[k] for k in range(len(arc))]
     return gtarc.compress(gtarc.build(files, [False] * len(files), align=4))

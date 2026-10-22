@@ -21,6 +21,7 @@ import build_car as B     # noqa: E402
 import carinf             # noqa: E402
 import disc               # noqa: E402
 import gtarc              # noqa: E402
+import sysnames           # noqa: E402
 import wheelpic           # noqa: E402
 import wheels as WH       # noqa: E402
 
@@ -32,6 +33,8 @@ TARGETS = {
     'aminn': (70, 'Mazda Eunos Roadster NORMAL'),
     'altsn': (64, 'Mazda Lantis 2000 Type-R'),
 }
+# the car's tile on its dealer's new car page (MENU_IMG.ARC picture, tile number column by column)
+TILES = {'slgan': ('subaru-new.slt', 5), 'aminn': ('mazda-new.slt', 4), 'altsn': ('mazda-new.slt', 3)}
 RPM = list(range(1000, 9000, 500))      # the 16 points of the game's torque curves
 
 
@@ -62,6 +65,9 @@ def gt1_spec(s):
         # the PAL menus show the power x 0.986 (PS to hp): 187 shows as 184
         'display': (s['length'], e['cc'], int(np.ceil(e['power_ps'] / 0.986)), e['power_rpm'],
                     int(round(peak_nm / 9.80665 * 100)), e['torque_rpm']),
+        # shown on the SPEC page (None: those of the car replaced)
+        'type': carinf.type_bytes(e['aspiration'], e.get('valvetrain', 'DOHC'), e['cylinders'],
+                                  *s['suspension']) if 'cylinders' in e and 'suspension' in s else None,
     }
 
 
@@ -114,8 +120,12 @@ def _shift(scene, zc):
     return scene
 
 
-def generate(model, s, disc_path, log=print):
-    d = disc.Disc(disc_path)
+def generate(model, s, disc_path, log=print, files=None):
+    """({file name: new bytes}, Disc, (car, tex)). files: files already changed (another car
+    converted before, the MX-5...): this car is added to them."""
+    d = disc_path if isinstance(disc_path, disc.Disc) else disc.Disc(disc_path)
+    files = dict(files or {})
+    read = lambda name: files[name] if name in files else d.read(name)
     if BOOT not in d.read('SYSTEM.CNF').decode('latin-1'):
         raise ValueError("ce n'est pas Gran Turismo PAL (%s)" % BOOT)
     code = s['target']
@@ -128,7 +138,7 @@ def generate(model, s, disc_path, log=print):
     atlas = B.Atlas(scene, sp, (hv, ht))
     paints = [(p['name'], tuple(p['rgb'])) for p in s['paints']]
     log('2/3 CAR.DAT (%s, entrées %d/%d)' % (TARGETS[code][1], i, i + 1))
-    arc = gtarc.Arc(d.read('CAR.DAT'))
+    arc = gtarc.Arc(read('CAR.DAT'))
     wp = wheelpic.picture(info['wheel_scene'], wheels[1], arc[i], log=log)
     arches = [(w.centre, w.radius) for w in wheels]
     # as the disc's cars: the faces over the arches and black wells behind the wheels drawn
@@ -140,10 +150,30 @@ def generate(model, s, disc_path, log=print):
     menu = (wheels[0].width, wheels[0].radius, wheels[2].width, wheels[2].radius)
     car, _ = B.build_car(arc[i + 1], lods, ftex, W, sp[:, 1].min(), menu_wheels=menu, before_wheels=before)
     new = {i: tex, i + NIGHT: tex, i + 1: car, i + 1 + NIGHT: car}
-    files = {'CAR.DAT': gtarc.replace(arc, new)}
+    files['CAR.DAT'] = gtarc.replace(arc, new)
     log('3/3 CARINF.DAT (nom, caractéristiques, peintures, prix)')
-    files['CARINF.DAT'] = carinf.patch(d.read('CARINF.DAT'), [code], [p for p, _ in paints], s.get('price'),
+    files['CARINF.DAT'] = carinf.patch(read('CARINF.DAT'), [code], [p for p, _ in paints], s.get('price'),
                                        log=log, spec_values=gt1_spec(s), name=tuple(s['name']))
+    # the menus: name picture, dealer tile, INFO page (when the specification file has an emblem)
+    if s.get('emblem'):
+        import carmenus
+        import preview
+        from PIL import Image
+        em = carmenus.emblem_from_rgba(np.asarray(Image.open(s['emblem']).convert('RGBA')))
+        info = s.get('info')
+        if isinstance(info, str):
+            info = [info] * 6
+        dealer, tile = TILES.get(code, (None, None))
+        car_menu = dict(code=code, emblem=em, main=s.get('title', s['name'][0]), sub=s.get('title_sub', s['name'][1]),
+                        dealer=dealer, tile=tile, tile_name=s.get('tile_name', s['name'][0]),
+                        tile_trim=s.get('tile_trim', s['name'][1]), price=s.get('price', 0),
+                        thumb=preview.render(car, tex, 0, (236, 200), yaw=215, pitch=-20, bg=(66, 66, 66)),
+                        info_title=s.get('info_title', ' '.join(s['name'])), info=info)
+        files['MENU_IMG.ARC'] = carmenus.patch(read('MENU_IMG.ARC'), d.read('MENU_RAW.ARC'), [car_menu], log=log)
+    # the short name of the race screens (SYSTEM.DAT), at the old name's length
+    short = s.get('short_name', ' '.join(s['name']))
+    files['SYSTEM.DAT'] = sysnames.rename(read('SYSTEM.DAT'), i, short)
+    log('  SYSTEM.DAT : nom court %r' % sysnames.name_of(files['SYSTEM.DAT'], i))
     for name, data in files.items():
         if len(data) > d.room(name):
             raise ValueError('%s : %d octets de trop' % (name, len(data) - d.room(name)))
