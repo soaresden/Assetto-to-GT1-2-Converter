@@ -1,0 +1,23 @@
+# game data and models (never published: everyone uses their own)
+*.chd
+*.bin
+*.cue
+*.iso
+*.img
+*.car
+*.tex
+*.kn5
+*.acd
+*.glb
+*.gltf
+*.fbx
+*.dds
+*.sstate
+*.zip
+*.7z
+
+# generated
+__pycache__/
+*.pyc
+out/
+build/

@@ -1,0 +1,29 @@
+{
+  "comment": "Example: the Mazda MX-5 RF ND2 2.0 (2019-2024) in place of the Eunos Roadster NORMAL. Model: an Assetto Corsa mod of the MX-5 RF (mazda_mx5_rf.kn5), not included.",
+  "target": "aminn",
+  "name": ["MX-5 RF", "ND2 2.0"],
+  "length": 3915, "width": 1735, "height": 1235, "wheelbase": 2310, "tracks": [1495, 1505],
+  "weight": 1125,
+  "engine": {
+    "cc": 1997, "power_ps": 184, "power_rpm": 7000, "torque_rpm": 4000,
+    "shift_rpm": 7600, "rev_limit": 8200,
+    "torque": [[1000, 142], [1500, 162], [2000, 177], [2500, 188], [3000, 196], [3500, 202],
+               [4000, 205], [4500, 204], [5000, 202], [5500, 199], [6000, 195], [6500, 190],
+               [7000, 184], [7500, 173], [8000, 152], [8500, 127]]
+  },
+  "gears": [3.709, 2.190, 1.536, 1.177, 1.000, 0.832],
+  "reverse": 3.603,
+  "final": 3.454,
+  "tyres": {"rim": 17, "width": 205, "profile": 45},
+  "price": 29900,
+  "paints": [
+    {"name": "Deep Crystal Blue", "rgb": [24, 40, 84]},
+    {"name": "Soul Red Crystal", "rgb": [150, 16, 26]},
+    {"name": "Machine Grey", "rgb": [88, 90, 94]},
+    {"name": "Jet Black", "rgb": [14, 14, 16]},
+    {"name": "Snowflake White Pearl", "rgb": [226, 226, 220]},
+    {"name": "Ceramic", "rgb": [184, 186, 182]},
+    {"name": "Polymetal Grey", "rgb": [96, 108, 114]},
+    {"name": "Platinum Quartz", "rgb": [156, 150, 140]}
+  ]
+}
